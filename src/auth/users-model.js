@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// TOKEN_LIFE can be 'one-use' or 'expires'
+const TOKEN_LIFE = 'expires';
+
 const users = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -39,10 +42,24 @@ users.statics.createFromOauth = function (email) {
 
 };
 
-users.statics.authenticateToken = function (token) {
+users.statics.disabledTokens = {
+}
+
+users.statics.authenticateToken = function (token, authKey) {
+  // if TOKEN_LIFE is 'one-use' 
+  if (TOKEN_LIFE === 'one-use' && !authKey) {
+    // if token is in disabled return error
+    if (this.disabledTokens[token]) {
+      return 'Token has be disabled'
+    } else { // if toke is not disabled yet add it to disabled.
+      this.disabledTokens[token] = 1;
+    }
+  }
   // get back what we had before encryption {_id:_id, role:role}
   let parsedToken = jwt.verify(token, process.env.SECRET);
+  // create a query object to query our database for user
   let query = { _id: parsedToken.id };
+  // query database and return user
   return this.findOne(query);
 };
 
@@ -64,8 +81,14 @@ users.methods.generateToken = function () {
     id: this._id,
     role: this.role,
   };
-
-  return jwt.sign(token, process.env.SECRET);
+  switch (TOKEN_LIFE) {
+    case 'expires':
+      return jwt.sign(token, process.env.SECRET, { expiresIn: '1h' });
+    case 'one-use':
+      return jwt.sign(token, process.env.SECRET);
+    default:
+      return 'TOKEN_LIFE environment variable not set properly';
+  }
 };
 
 module.exports = mongoose.model('users', users);
