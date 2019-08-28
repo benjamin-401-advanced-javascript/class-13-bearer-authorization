@@ -45,9 +45,9 @@ users.statics.createFromOauth = function (email) {
 users.statics.disabledTokens = {
 }
 
-users.statics.authenticateToken = function (token) {
+users.statics.authenticateToken = function (token, authKey) {
   // if TOKEN_LIFE is 'one-use' 
-  if (TOKEN_LIFE === 'one-use') {
+  if (TOKEN_LIFE === 'one-use' && !authKey) {
     // if token is in disabled return error
     if (this.disabledTokens[token]) {
       return 'Token has be disabled'
@@ -81,8 +81,6 @@ users.methods.generateToken = function () {
     id: this._id,
     role: this.role,
   };
-
-
   switch (TOKEN_LIFE) {
     case 'expires':
       return jwt.sign(token, process.env.SECRET, { expiresIn: '1h' });

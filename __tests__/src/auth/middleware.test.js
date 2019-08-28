@@ -1,15 +1,15 @@
 'use strict';
 
-process.env.SECRET="test";
+process.env.SECRET = "test";
 
 const supergoose = require('../../supergoose.js');
-const auth = require('../../../src/auth/middleware.js');
+const auth = require('../../../src/auth/middleware.js').auth;
 const Users = require('../../../src/auth/users-model.js');
 
 let users = {
-  admin: {username: 'admin', password: 'password', role: 'admin'},
-  editor: {username: 'editor', password: 'password', role: 'editor'},
-  user: {username: 'user', password: 'password', role: 'user'},
+  admin: { username: 'admin', password: 'password', role: 'admin' },
+  editor: { username: 'editor', password: 'password', role: 'editor' },
+  user: { username: 'user', password: 'password', role: 'user' },
 };
 
 beforeAll(async (done) => {
@@ -23,14 +23,14 @@ beforeAll(async (done) => {
 afterAll(supergoose.stopDB);
 
 describe('Auth Middleware', () => {
-  
+
   // admin:password: YWRtaW46cGFzc3dvcmQ=
   // admin:foo: YWRtaW46Zm9v
-  
+
   let errorObject = "Invalid User ID/Password";
-  
+
   describe('user authentication', () => {
-    
+
     let cachedToken;
 
     it('fails a login for a user (admin) with the incorrect basic credentials', () => {
@@ -62,14 +62,14 @@ describe('Auth Middleware', () => {
       let next = jest.fn();
       let middleware = auth;
 
-      return middleware(req,res,next)
-        .then( () => {
+      return middleware(req, res, next)
+        .then(() => {
           cachedToken = req.token;
           expect(next).toHaveBeenCalledWith();
         });
 
     }); // it()
-    
+
   });
 
 });

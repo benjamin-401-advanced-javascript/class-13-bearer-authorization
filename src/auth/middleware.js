@@ -2,7 +2,12 @@
 
 const User = require('./users-model.js');
 
-module.exports = (req, res, next) => {
+module.exports.authKey = (req, res, next) => {
+  req.authKey = true;
+  next();
+}
+
+module.exports.auth = (req, res, next) => {
 
   try {
     let [authType, authString] = req.headers.authorization.split(/\s+/);
@@ -34,16 +39,23 @@ module.exports = (req, res, next) => {
   }
 
   function _authBearer(authToken) {
-    return User.authenticateToken(authToken)
-      .then(user => _authenticate(user))
+    return User.authenticateToken(authToken, req.authKey)
+      .then(user => _authenticate(user, authToken))
       .catch(next);
   }
 
-  function _authenticate(user) {
+  function _authenticate(user, authToken) {
     // add user and token to req if user exists
     if (user) {
       req.user = user;
-      req.token = user.generateToken();
+      // if authKey has been set to true (happens in middleware authKey method)
+      // return the same token
+      if (req.authKey) {
+        req.token = authToken;
+      } else {
+        // else generate new token
+        req.token = user.generateToken();
+      }
       next();
     }
     else {

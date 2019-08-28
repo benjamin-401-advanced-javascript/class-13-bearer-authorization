@@ -60,6 +60,19 @@ describe('Auth Router', () => {
           });
       });
 
+      it(' can signin with auth Key bearer token that doesnt expire (ROUTE: /key)', () => {
+        return mockRequest.post('/signin')
+          .auth(users[userType].username, users[userType].password)
+          .then(results => {
+            return mockRequest.post('/key')
+              .set('Authorization', `bearer ${results.text}`)
+              .then(results => {
+                var token = jwt.verify(results.text, process.env.SECRET);
+                expect(token.id).toEqual(id);
+              })
+          });
+      });
+
     });
 
   });
